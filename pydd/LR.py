@@ -120,6 +120,8 @@ class genericLR(AbstractDDCalls, BaseEstimator):
             gamma=None,
             iter_size=1,
             batch_size=128,
+            snapshot=None,
+            snapshot_prefix=None,
             metrics=['mcll', 'accp'],
             class_weights=None):
 
@@ -166,7 +168,9 @@ class genericLR(AbstractDDCalls, BaseEstimator):
                 'weight_decay': weight_decay,
                 'power': power,
                 'gamma': gamma,
-                'iter_size': iter_size
+                'iter_size': iter_size,
+                "snapshot": snapshot,
+                "snapshot_prefix": snapshot_prefix,
             },
             'net': {
                 'batch_size': batch_size

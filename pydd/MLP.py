@@ -130,6 +130,8 @@ class genericMLP(AbstractDDCalls, BaseEstimator):
             gamma=None,
             iter_size=1,
             batch_size=128,
+            snapshot=None,
+            snapshot_prefix=None,
             metrics=["mcll", "accp"],
             class_weights=None,
             async=True,
@@ -177,6 +179,8 @@ class genericMLP(AbstractDDCalls, BaseEstimator):
                        "weight_decay": weight_decay,
                        "power": power,
                        "gamma": gamma,
+                       "snapshot": snapshot,
+                       "snapshot_prefix": snapshot_prefix,
                        "iter_size": iter_size},
             "net": {"batch_size": batch_size},
             "class_weights": class_weights if class_weights else [1.] * self.service_parameters_mllib["nclasses"]

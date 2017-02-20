@@ -34,8 +34,8 @@ for clf in clfs:
     for cw in class_weights:
         print('-' * 50)
         print(clf, cw)
-        clf.fit(x_train, y_train, iterations=500, batch_size=128, class_weights=cw, gamma=0.1,
-                stepsize=100, weight_decay=0.0001)
+        clf.fit(x_train, y_train, iterations=100, batch_size=128, base_lr=0.01, class_weights=cw, gamma=0.1,
+                stepsize=30, weight_decay=0.0001, snapshot=10)
         y_pred = clf.predict(x_test)
         report = metrics.classification_report(y_test, y_pred)
         print(report)
