@@ -56,7 +56,6 @@ class genericLR(AbstractDDCalls, BaseEstimator):
         self.db = db
         self.tmp_dir = tmp_dir
 
-
         self.params = {
             'host': self.host,
             'port': self.port,

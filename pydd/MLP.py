@@ -4,6 +4,8 @@
 @brief:
 """
 
+from __future__ import print_function
+
 import os
 import shutil
 import json
@@ -114,6 +116,8 @@ class genericMLP(AbstractDDCalls, BaseEstimator):
         json_dump = self.create_service(self.sname, self.model, self.description, self.mllib,
                                         self.service_parameters_input, self.service_parameters_mllib,
                                         self.service_parameters_output)
+
+        assert json_dump['status']['code'] == 201 and json_dump['status']['msg'] == "Created", json_dump
         self.answers.append(json_dump)
 
         with open("{}/model.json".format(self.model["repository"])) as f:
@@ -188,19 +192,23 @@ class genericMLP(AbstractDDCalls, BaseEstimator):
 
         if self.n_fit > 0:
             self.delete_service(self.sname, "mem")
+
             if "template" in self.service_parameters_mllib:
                 self.service_parameters_mllib.pop("template")
 
-            self.create_service(self.sname, self.model, self.description, self.mllib,
-                                self.service_parameters_input,
-                                self.service_parameters_mllib,
-                                self.service_parameters_output)
+            json_dump = self.create_service(self.sname, self.model, self.description, self.mllib,
+                                            self.service_parameters_input,
+                                            self.service_parameters_mllib,
+                                            self.service_parameters_output)
+
+            assert json_dump['status']['code'] == 201 and json_dump['status']['msg'] == "Created", json_dump
 
         json_dump = self.post_train(self.sname,
                                     self.filepaths,
                                     self.train_parameters_input,
                                     self.train_parameters_mllib,
                                     self.train_parameters_output, async=async)
+
         time.sleep(1)
         self.answers.append(json_dump)
         with open("{}/model.json".format(self.model["repository"])) as f:
@@ -244,12 +252,13 @@ class genericMLP(AbstractDDCalls, BaseEstimator):
         json_dump = self.post_predict(self.sname, data, self.predict_parameters_input,
                                       self.predict_parameters_mllib, self.predict_parameters_output)
 
+        assert json_dump['status']['code'] == 200 and json_dump['status']['msg'] == "OK", json_dump
+
         self.answers.append(json_dump)
         with open("{}/model.json".format(self.model["repository"])) as f:
             self.calls = [json.loads(line, encoding="utf-8") for line in f]
 
         y_score = to_array(json_dump, nclasses)
-
         return y_score
 
     def predict(self, X, batch_size=128):
@@ -352,3 +361,26 @@ class MLPfromArray(genericMLP):
                                            finetuning=finetuning,
                                            db=db,
                                            tmp_dir=tmp_dir)
+
+
+if __name__ == "__main__":
+    import numpy as np
+    from sklearn import datasets, metrics, model_selection, preprocessing
+
+    # Parameters
+    seed = 1337
+    np.random.seed(seed)  # for reproducibility
+    n_classes = 10
+    params = {'port': 8085, 'nclasses': n_classes, 'gpu': True}
+    split_params = {'test_size': 0.2, 'random_state': seed}
+    clf = MLPfromArray(**params)
+
+    X, y = datasets.load_digits(n_class=n_classes, return_X_y=True)
+    X = preprocessing.StandardScaler().fit_transform(X)
+    x_train, x_test, y_train, y_test = model_selection.train_test_split(X, y, **split_params)
+
+    clf.fit(x_train, y_train, iterations=100, batch_size=128, base_lr=0.01, gamma=0.1, stepsize=30,
+            weight_decay=0.0001, snapshot=10)
+    y_pred = clf.predict(x_test)
+    report = metrics.classification_report(y_test, y_pred)
+    print(report)

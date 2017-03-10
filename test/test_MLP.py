@@ -45,7 +45,6 @@ class TestSVM(object):
             [{'X': csr_matrix(x_train), 'Y': y_train, 'validation_data': [(csr_matrix(x_test), y_test)]}, x_test, MLPfromArray(**params)],
             [{'X': x_train, 'Y': y_train, 'validation_data': [(x_test, y_test)]}, x_test, LRfromArray(**params)],
             [{'X': csr_matrix(x_train), 'Y': y_train, 'validation_data': [(csr_matrix(x_test), y_test)]}, x_test, LRfromArray(**params)],
-
         ]
 
         for fit_param, predict_params, clf in clfs:
@@ -93,28 +92,6 @@ class TestSVM(object):
         assert np.array_equal(y_pred_array, clf_array.predict(x_test))
         os_utils._remove_files([train_path, test_path])
         os_utils._remove_dirs(model_repo)
-
-    def test_sklearn(self):
-
-        params = {'gpu': True, 'nclasses': n_classes}
-        params.update(connec_param)
-        param_grid = {'layers': [[10], [100]]}
-
-        skf = model_selection.StratifiedKFold(n_splits=2, shuffle=True, random_state=seed)
-        scorer = metrics.make_scorer(metrics.accuracy_score, greater_is_better=True)
-
-        clfs = [MLPfromArray(**params)]
-        for clf in clfs:
-            cv_scores = model_selection.cross_val_score(clf, X, Y, scoring=scorer, cv=skf)
-
-            y_pred = model_selection.cross_val_predict(clf, X, Y, cv=skf, method='predict_proba')
-            score = metrics.accuracy_score(Y, y_pred.argmax(-1))
-
-            grid = model_selection.GridSearchCV(clf, param_grid, scoring=scorer, cv=skf)
-            grid.fit(X, Y)
-            grid_best_score = grid.best_score_
-
-            assert score and cv_scores.all() and grid_best_score > 0.9
 
 
 if __name__ == '__main__':
